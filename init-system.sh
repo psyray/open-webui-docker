@@ -15,7 +15,7 @@ if [ -z "$HOSTNAME" ]; then
 fi
 
 # System Configuration
-cat > /etc/security/limits.d/ollama.conf << EOF
+cat > /etc/security/limits.d/openwebui.conf << EOF
 *       soft    memlock    unlimited
 *       hard    memlock    unlimited
 EOF
@@ -29,7 +29,7 @@ debug = "/var/log/nvidia-container-toolkit.log"
 EOF
 
 # Sysctl Configuration
-cat > /etc/sysctl.d/99-ollama.conf << EOF
+cat > /etc/sysctl.d/99-openwebui.conf << EOF
 # CPU et memory Performance
 vm.swappiness=10
 vm.dirty_ratio=60
@@ -60,9 +60,8 @@ vm.nr_hugepages=8192
 EOF
 
 # Create required directories
-cd docker
-mkdir -p certs
-chmod 755 certs
+mkdir -p docker/certs
+chmod 755 docker/certs
 
 # Generate SSL self-signed certificates
 openssl req -x509 \
@@ -75,9 +74,8 @@ openssl req -x509 \
     -addext "subjectAltName = DNS:$HOSTNAME"
 
 # Define certificates permissions
-chmod 644 certs/cert.crt
-chmod 600 certs/cert.key
-cd ..
+chmod 644 docker/certs/cert.crt
+chmod 600 docker/certs/cert.key
 
 # Local hosts configuration
 if ! grep -q "$HOSTNAME" /etc/hosts; then
@@ -92,10 +90,10 @@ apt-get update && apt-get install -y \
     iotop
 
 # Apply sysctl settings
-sysctl -p /etc/sysctl.d/99-ollama.conf
+sysctl -p /etc/sysctl.d/99-openwebui.conf
 
 echo "Installation completed successfully"
-echo "Certificates generated in ./certs/"
+echo "Certificates generated in ./docker/certs/"
 echo "Local domain $HOSTNAME added to /etc/hosts"
 echo "===================================="
 echo "-> To start Open WebUI, run: make up"
