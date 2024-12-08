@@ -14,6 +14,7 @@ A customized deployment of Open WebUI with SearXNG integration for enhanced RAG 
   - Secure cookie settings
 - **Easy Maintenance**: Makefile for common operations
 - **System Optimization**: Automated system configuration for optimal performance
+- **Flexible Configuration**: Customizable hostname and security settings
 
 ## Prerequisites
 
@@ -30,36 +31,39 @@ git clone https://github.com/yourusername/open-webui.git
 cd open-webui
 ```
 
-2. Initialize the system (requires root privileges):
+2. Create and configure your environment file:
+```bash
+cp .env-dist .env
+```
+
+Edit `.env` and configure at minimum:
+```env
+# System Configuration
+HOSTNAME="openwebui.local"    # Your preferred hostname
+
+# Security Configuration
+WEBUI_SECRET_KEY="your_secret_key"    # Generate with: openssl rand -hex 32
+SEARXNG_SECRET="your_searxng_secret"  # Generate with: openssl rand -hex 32
+```
+
+3. Initialize the system (requires root privileges):
 ```bash
 sudo ./init-system.sh
 ```
 This script will:
 - Configure system limits and kernel parameters
 - Set up NVIDIA container runtime
-- Generate self-signed SSL certificates
-- Configure local domain (ollama.local)
+- Generate self-signed SSL certificates for your hostname
+- Configure local domain resolution
 - Install required dependencies
-- Enable system services
 
-3. Create your environment file:
-```bash
-cp .env-dist .env
-```
-
-4. Configure your environment variables in `.env`:
-```env
-# Generate a new secret key
-WEBUI_SECRET_KEY="your_secret_key"
-SEARXNG_SECRET="your_searxng_secret"  # Generate with: openssl rand -hex 32
-```
-
-5. Start the services:
+4. Start the services:
 ```bash
 make up
 ```
 
-The application will be available at: https://ollama.local
+The application will be available at: https://your-configured-hostname
+(default: https://openwebui.local)
 
 ## System Requirements
 
@@ -95,6 +99,7 @@ make upgrade   # Full upgrade: down, remove images, rebuild, and start
 
 ### Environment Variables
 
+- `HOSTNAME`: Your preferred hostname for accessing the application
 - `WEBUI_AUTH`: Enable authentication (recommended: True)
 - `WEBUI_SECRET_KEY`: Secret key for session management
 - `WEBUI_SESSION_COOKIE_SECURE`: Force HTTPS for cookies
@@ -108,8 +113,8 @@ make upgrade   # Full upgrade: down, remove images, rebuild, and start
 ### Ports
 
 - 80: HTTP (redirects to HTTPS)
-- 443: HTTPS
-- 8443: Alternative HTTPS port
+- 443: Open WebUI
+- 8443: SearXNG
 
 ## Architecture
 
@@ -188,14 +193,17 @@ nvidia-smi
 nvidia-container-cli info
 ```
 
-5. Certificate issues:
+5. Hostname/Certificate issues:
 ```bash
-# Regenerate certificates
-cd docker
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-    -keyout certs/cert.key -out certs/cert.crt \
-    -subj "/CN=ollama.local" \
-    -addext "subjectAltName = DNS:ollama.local"
+# Update hostname in .env file
+HOSTNAME="your-new-hostname.local"
+
+# Regenerate certificates with new hostname
+sudo ./init-system.sh
+
+# Restart services
+make down
+make up
 ```
 
 ## License

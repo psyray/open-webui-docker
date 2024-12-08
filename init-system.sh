@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Load environment variables
+if [ -f .env ]; then
+    source .env
+else
+    echo "Error: .env file not found"
+    exit 1
+fi
+
+# Verify HOSTNAME is set
+if [ -z "$HOSTNAME" ]; then
+    HOSTNAME="openwebui.local"
+    echo "Warning: HOSTNAME not set in .env, using default: $HOSTNAME"
+fi
+
 # System Configuration
 cat > /etc/security/limits.d/ollama.conf << EOF
 *       soft    memlock    unlimited
@@ -57,8 +71,8 @@ openssl req -x509 \
     -newkey rsa:2048 \
     -keyout docker/certs/cert.key \
     -out docker/certs/cert.crt \
-    -subj "/CN=ollama.local" \
-    -addext "subjectAltName = DNS:ollama.local"
+    -subj "/CN=$HOSTNAME" \
+    -addext "subjectAltName = DNS:$HOSTNAME"
 
 # Define certificates permissions
 chmod 644 certs/cert.crt
@@ -66,13 +80,12 @@ chmod 600 certs/cert.key
 cd ..
 
 # Local hosts configuration
-if ! grep -q "ollama.local" /etc/hosts; then
-    echo "127.0.0.1 ollama.local" >> /etc/hosts
+if ! grep -q "$HOSTNAME" /etc/hosts; then
+    echo "127.0.0.1 $HOSTNAME" >> /etc/hosts
 fi
 
 # Dependencies & monitoring tools installation
 apt-get update && apt-get install -y \
-    prometheus-node-exporter \
     nvidia-container-toolkit \
     curl \
     htop \
@@ -81,11 +94,9 @@ apt-get update && apt-get install -y \
 # Apply sysctl settings
 sysctl -p /etc/sysctl.d/99-ollama.conf
 
-# Activate system services
-systemctl enable --now prometheus-node-exporter
-
 echo "Installation completed successfully"
 echo "Certificates generated in ./certs/"
-echo "Local domains added to /etc/hosts"
+echo "Local domain $HOSTNAME added to /etc/hosts"
 echo "===================================="
 echo "-> To start Open WebUI, run: make up"
+echo "-> Access the interface at: https://$HOSTNAME"
