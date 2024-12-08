@@ -1,0 +1,4 @@
+FROM searxng/searxng:latest
+
+# Installation de wget pour le healthcheck
+RUN apk add --no-cache wget bash

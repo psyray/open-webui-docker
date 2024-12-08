@@ -1,0 +1,134 @@
+name: openwebui
+
+x-common-networks: &common-networks
+  networks:
+    - ollama-network
+
+services:
+  nginx:
+    env_file:
+      - ../.env
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8443:8443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      open-webui:
+        condition: service_healthy
+    secrets:
+      - source: proxy.cert
+        target: /etc/nginx/certs/cert.crt
+      - source: proxy.key
+        target: /etc/nginx/certs/cert.key
+    <<: *common-networks
+    restart: unless-stopped
+
+  ollama:
+    env_file:
+      - ../.env
+    build:
+      context: ./ollama
+      dockerfile: Dockerfile
+    container_name: ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ollama-config:/config
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/version || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    <<: *common-networks
+    restart: unless-stopped
+
+  open-webui:
+    env_file:
+      - ../.env
+    build:
+      context: ./openwebui
+      dockerfile: Dockerfile
+    container_name: open-webui
+    volumes:
+      - open-webui_data:/app/backend/data
+    environment:
+      # Security
+      - WEBUI_AUTH=${WEBUI_AUTH}
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      - BYPASS_MODEL_ACCESS_CONTROL=${WEBUI_BYPASS_MODEL_ACL}
+      - WEBUI_SESSION_COOKIE_SECURE=${WEBUI_SESSION_COOKIE_SECURE}
+
+      # Models
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - DEFAULT_MODELS=llama3.1:latest
+
+      # Locale
+      - DEFAULT_LOCALE=${DEFAULT_LOCALE}
+
+      # RAG
+      - PDF_EXTRACT_IMAGES=${PDF_EXTRACT_IMAGES}
+      - ENABLE_RAG_WEB_SEARCH=${ENABLE_RAG_WEB_SEARCH}
+      - RAG_WEB_SEARCH_ENGINE=searxng
+      - RAG_WEB_SEARCH_RESULT_COUNT=${RAG_WEB_SEARCH_RESULT_COUNT}
+      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      ollama:
+        condition: service_healthy
+      searxng:
+        condition: service_healthy
+    <<: *common-networks
+    restart: unless-stopped
+
+  searxng:
+    env_file:
+      - ../.env
+    build:
+      context: ./searxng
+      dockerfile: Dockerfile
+    container_name: searxng
+    volumes:
+      - ./searxng:/etc/searxng
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    <<: *common-networks
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  open-webui_data:
+
+networks:
+  ollama-network:
+    driver: bridge
+
+secrets:
+  proxy.key:
+    file: ./certs/cert.key
+  proxy.cert:
+    file: ./certs/cert.crt
