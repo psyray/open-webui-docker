@@ -103,7 +103,7 @@ make upgrade   # Full upgrade: down, remove images, rebuild, and start
 - `WEBUI_AUTH`: Enable authentication (recommended: True)
 - `WEBUI_SECRET_KEY`: Secret key for session management
 - `WEBUI_SESSION_COOKIE_SECURE`: Force HTTPS for cookies
-- `DEFAULT_LOCALE`: Interface language (default: "fr")
+- `DEFAULT_LOCALE`: Interface language (default: "en")
 - `ENABLE_RAG_WEB_SEARCH`: Enable web search for RAG
 - `RAG_WEB_SEARCH_RESULT_COUNT`: Number of search results to use
 - `SEARXNG_SECRET`: SearXNG instance secret key
