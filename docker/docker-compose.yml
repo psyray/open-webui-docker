@@ -36,6 +36,8 @@ services:
       context: ./ollama
       dockerfile: Dockerfile
     container_name: ollama
+    ports:
+      - "127.0.0.1:11434:11434"
     deploy:
       resources:
         reservations:
@@ -49,6 +51,7 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - OLLAMA_KEEP_ALIVE=24h
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:11434/api/version || exit 1"]
       interval: 10s
