@@ -99,8 +99,8 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
-      searxng:
-        condition: service_healthy
+      # searxng:
+      #   condition: service_healthy
     <<: *common-networks
     restart: unless-stopped
 
@@ -113,12 +113,12 @@ services:
     container_name: searxng
     volumes:
       - ./searxng:/etc/searxng
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+    # healthcheck:
+    #   test: ["CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 20s
     <<: *common-networks
     restart: unless-stopped
 

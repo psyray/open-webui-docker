@@ -1,4 +1,4 @@
 FROM searxng/searxng:latest
 
 # Install wget for healthcheck
-RUN apt install -y wget bash
+#RUN apt install -y wget bash
