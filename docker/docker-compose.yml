@@ -36,6 +36,7 @@ services:
       context: ./ollama
       dockerfile: Dockerfile
     container_name: ollama
+    entrypoint: /entrypoint.sh
     ports:
       - "127.0.0.1:11434:11434"
     deploy:
@@ -48,6 +49,7 @@ services:
     volumes:
       - ollama_data:/root/.ollama
       - ./ollama-config:/config
+      - ./ollama/entrypoint.sh:/entrypoint.sh
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility

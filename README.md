@@ -125,6 +125,86 @@ The setup consists of four main services:
 3. **open-webui**: Web interface for interacting with models
 4. **searxng**: Private search engine for RAG capabilities
 
+## Ollama Integrations (Clients)
+
+Once the stack is running (`make up`), the Ollama API is exposed on **`http://localhost:11434`**. The tools below run on your **host machine** and connect to this URL. Install the client you want, then configure it to use `http://localhost:11434` (and `/v1` or `/v1/` where the tool expects it). Many of these tools recommend a context window of at least 64k tokens; see [Ollama context length](https://docs.ollama.com/context-length) to adjust if needed.
+
+### Claude Code
+
+- **Docs**: [Ollama – Claude Code](https://docs.ollama.com/integrations/claude-code)
+- **Install**: `curl -fsSL https://claude.ai/install.sh | bash`
+- **Config**: Export on your host:
+  ```bash
+  export ANTHROPIC_AUTH_TOKEN=ollama
+  export ANTHROPIC_API_KEY=""
+  export ANTHROPIC_BASE_URL=http://localhost:11434
+  ```
+- **Run**: `claude --model qwen3-coder` (or another model; 64k+ context recommended).
+
+### Codex
+
+- **Docs**: [Ollama – Codex](https://docs.ollama.com/integrations/codex)
+- **Install**: `npm install -g @openai/codex`
+- **Config**: Use Ollama with `codex --oss`. Optional config in `~/.codex/config.toml` if needed.
+- **Run**: `codex --oss` (default model `gpt-oss:20b`), or `codex --oss -m gpt-oss:120b`. 64k+ context recommended.
+
+### OpenCode
+
+- **Docs**: [Ollama – OpenCode](https://docs.ollama.com/integrations/opencode)
+- **Install**: `curl -fsSL https://opencode.ai/install | bash`
+- **Config**: Add to `~/.config/opencode/opencode.json` (provider options):
+  ```json
+  "options": { "baseURL": "http://localhost:11434/v1" }
+  ```
+- **Run**: Use a model defined in that config (e.g. `qwen3-coder`). 64k+ context recommended.
+
+### Droid
+
+- **Docs**: [Ollama – Droid](https://docs.ollama.com/integrations/droid)
+- **Install**: `curl -fsSL https://app.factory.ai/cli | sh`
+- **Config**: Add to `~/.factory/config.json` (custom_models):
+  ```json
+  {
+    "model_display_name": "qwen3-coder [Ollama]",
+    "model": "qwen3-coder",
+    "base_url": "http://localhost:11434/v1/",
+    "api_key": "not-needed",
+    "provider": "generic-chat-completion-api",
+    "max_tokens": 32000
+  }
+  ```
+- **Run**: Select the configured model in Droid. 64k+ context recommended.
+
+### Goose Desktop
+
+- **Docs**: [Ollama – Goose](https://docs.ollama.com/integrations/goose), [Goose – Install](https://block.github.io/goose/docs/getting-started/installation/)
+- **Install**: Download from the Goose site or `brew install --cask block-goose` (macOS).
+- **Config**: In the app: **Settings** → **Configure Provider** → **Ollama** → set **API Host** to `http://localhost:11434`.
+- **Run**: Use Goose Desktop as usual with Ollama models.
+
+### Goose CLI
+
+- **Docs**: [Ollama – Goose](https://docs.ollama.com/integrations/goose), [Goose – Install](https://block.github.io/goose/docs/getting-started/installation/)
+- **Install**: `curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | bash`
+- **Config**: Run `goose configure`, choose Ollama, and set the host; or export `OLLAMA_HOST=http://localhost:11434`.
+- **Run**: `goose session` (or other goose commands).
+
+### Pi
+
+- **Docs**: [Ollama – Pi](https://docs.ollama.com/integrations/pi)
+- **Install**: `npm install -g @mariozechner/pi-coding-agent`
+- **Config**: In `~/.pi/agent/models.json` set provider baseUrl to `http://localhost:11434/v1`; in `~/.pi/agent/settings.json` set `defaultProvider` and `defaultModel` (e.g. `ollama`, `qwen3-coder`).
+- **Run**: Use Pi with the configured Ollama model.
+
+### OpenClaw
+
+- **Docs**: [Ollama – OpenClaw](https://docs.ollama.com/integrations/openclaw)
+- **Install**: `npm install -g openclaw@latest` then `openclaw onboard --install-daemon`
+- **Config**: Quick setup: `ollama launch openclaw` (configures OpenClaw to use local Ollama). Or point OpenClaw config manually to `http://localhost:11434`.
+- **Run**: Use OpenClaw; 64k+ context recommended.
+
+For a quick reference of optional environment variables you can export on the host, see the commented block in [.env-dist](.env-dist).
+
 ## Security Considerations
 
 - All services run in an isolated Docker network
