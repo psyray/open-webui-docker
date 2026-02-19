@@ -2,17 +2,17 @@ include .env
 
 COMPOSE_PREFIX_CMD        := COMPOSE_DOCKER_CLI_BUILD=1
 COMPOSE_CMD               := docker compose
-COMPOSE_FILE              := docker/docker-compose.yml docker/docker-compose.onyx.yml
-SERVICES                  := nginx ollama open-webui searxng relational_db index cache inference_model_server indexing_model_server api_server background web_server onyx-nginx
+COMPOSE_FILE              := docker/docker-compose.yml
+SERVICES                  := nginx ollama open-webui searxng
 
-DOCKER_COMPOSE := $(shell if command -v docker > /dev/null && docker compose version > /dev/null 2>&1; then echo "docker compose"; elif command -v docker-compose > /dev/null; then echo "docker-compose"; else echo ""; fi)
+DOCKER_COMPOSE := $(shell if command -v docker > /dev/null && docker compose version > /dev/null 2>&1; then echo "docker compose"; elif command -v docker-compose > /dev/null; then echo "docker-compose"; else echo ""; fi))
 
 ifeq ($(DOCKER_COMPOSE),)
 $(error Docker Compose not found. Please install Docker Compose)
 endif
 
 DOCKER_COMPOSE_CMD      := ${COMPOSE_PREFIX_CMD} ${DOCKER_COMPOSE} --env-file .env
-DOCKER_COMPOSE_FILE_CMD := ${DOCKER_COMPOSE_CMD} $(addprefix -f ,$(COMPOSE_FILE))
+DOCKER_COMPOSE_FILE_CMD := ${DOCKER_COMPOSE_CMD} -f ${COMPOSE_FILE}
 
 .PHONY: pull up down stop restart logs build
 pull:                   ## Pull pre-built Docker images from repository.
@@ -51,4 +51,3 @@ remove_images:	## Remove all Docker images for reNgine-ng services.
 	else \
 		echo "No images found for ghcr.io/security-tools-alliance/rengine-ng"; \
 	fi
-
