@@ -1,11 +1,12 @@
-# Open WebUI with SearXNG Integration
+# Open WebUI with SearXNG and Onyx
 
-A customized deployment of Open WebUI with SearXNG integration for enhanced RAG (Retrieval-Augmented Generation) capabilities.
+A customized deployment of Open WebUI with SearXNG integration for RAG (Retrieval-Augmented Generation) and **Onyx** (Chat UI with Onyx Craft) as an alternative front-end for Ollama.
 
 ## Features
 
-- **Open WebUI**: Modern web interface for Ollama
-- **SearXNG Integration**: Private search engine for RAG capabilities
+- **Open WebUI**: Modern web interface for Ollama (port 443)
+- **Onyx (Chat UI) with Onyx Craft**: Self-hostable Chat UI with agents, RAG, MCP, and AI-powered artifact building (port 4443)
+- **SearXNG Integration**: Private search engine for RAG capabilities (port 8443)
 - **NVIDIA GPU Support**: Hardware acceleration for model inference
 - **Secure by Default**: 
   - HTTPS enabled
@@ -114,16 +115,37 @@ make upgrade   # Full upgrade: down, remove images, rebuild, and start
 
 - 80: HTTP (redirects to HTTPS)
 - 443: Open WebUI
+- 4443: Onyx (Chat UI + Onyx Craft)
 - 8443: SearXNG
+
+### Onyx Environment Variables
+
+Optional (see commented block in [.env-dist](.env-dist)); [Configure Onyx – Configuring Docker Deployments](https://docs.onyx.app/deployment/configuration/configuration#configuring-docker-deployments)):
+
+- `ONYX_POSTGRES_PASSWORD`: PostgreSQL password for Onyx (default: `password`)
+- `ENABLE_CRAFT`: Set to `true` for Onyx Craft (already set in compose)
+- `FILE_STORE_BACKEND`: `postgres` (no MinIO required)
+- `AUTH_TYPE`: e.g. `basic` for email/password auth
 
 ## Architecture
 
-The setup consists of four main services:
+The setup consists of:
 
-1. **nginx**: Reverse proxy handling SSL termination and routing
+1. **nginx**: Reverse proxy (SSL, routing to Open WebUI, Onyx, SearXNG)
 2. **ollama**: AI model serving with GPU support
-3. **open-webui**: Web interface for interacting with models
-4. **searxng**: Private search engine for RAG capabilities
+3. **open-webui**: Web interface for Ollama
+4. **searxng**: Private search engine for RAG
+5. **Onyx stack** (when using `docker-compose.onyx.yml`): PostgreSQL, Vespa, Redis, Onyx API, Onyx Web, Onyx nginx, model servers; all on the same Docker network as Ollama
+
+## Onyx and Onyx Craft
+
+[Onyx](https://docs.ollama.com/integrations/onyx) is a self-hostable Chat UI that integrates with Ollama. This deployment adds Onyx with [Onyx Craft](https://docs.onyx.app/deployment/local/docker#enabling-onyx-craft) (AI-powered web app, document, and slide building). The stack is defined in [docker/docker-compose.onyx.yml](docker/docker-compose.onyx.yml) and started together with `make up`.
+
+- **Docs**: [Ollama – Onyx](https://docs.ollama.com/integrations/onyx), [Onyx – Docker](https://docs.onyx.app/deployment/local/docker), [Enabling Onyx Craft](https://docs.onyx.app/deployment/local/docker#enabling-onyx-craft), [Configure Onyx](https://docs.onyx.app/deployment/configuration/configuration#configuring-docker-deployments)
+- **URL**: `https://<your-hostname>:4443` (e.g. `https://llm.easi.local:4443`)
+- **First run**: Open the URL, create an account, then in the setup wizard choose **Ollama** as the LLM provider.
+- **Ollama API URL in Onyx**: Because Onyx runs in Docker, the backend must reach Ollama on the internal network. In the Onyx setup form, set **Ollama API URL** to **`http://ollama:11434`** (not `http://localhost:11434`). This is the URL the Onyx server uses to call Ollama.
+- **Resources**: The Onyx stack (PostgreSQL, Vespa, Redis, model servers, API, web) is resource-heavy; see [Onyx resourcing](https://docs.onyx.app/deployment/getting_started/resourcing) for recommendations.
 
 ## Ollama Integrations (Clients)
 
@@ -244,6 +266,7 @@ make up
 Important data is stored in Docker volumes:
 - `ollama_data`: Model files and configurations
 - `open-webui_data`: User data and settings
+- `onyx_db`, `onyx_vespa`, `onyx_file_system`: Onyx data (when using Onyx stack)
 
 ## Troubleshooting
 
@@ -292,5 +315,6 @@ This project builds upon:
 - [Open WebUI](https://github.com/open-webui/open-webui)
 - [Ollama](https://github.com/ollama/ollama)
 - [SearXNG](https://github.com/searxng/searxng)
+- [Onyx](https://github.com/onyx-dot-app/onyx)
 
 Please refer to their respective licenses for terms of use. 
