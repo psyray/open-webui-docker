@@ -5,7 +5,7 @@ COMPOSE_CMD               := docker compose
 COMPOSE_FILE              := docker/docker-compose.yml
 SERVICES                  := nginx ollama open-webui searxng
 
-DOCKER_COMPOSE := $(shell if command -v docker > /dev/null && docker compose version > /dev/null 2>&1; then echo "docker compose"; elif command -v docker-compose > /dev/null; then echo "docker-compose"; else echo ""; fi))
+DOCKER_COMPOSE := $(shell if command -v docker > /dev/null && docker compose version > /dev/null 2>&1; then echo "docker compose"; elif command -v docker-compose > /dev/null; then echo "docker-compose"; else echo ""; fi)
 
 ifeq ($(DOCKER_COMPOSE),)
 $(error Docker Compose not found. Please install Docker Compose)
